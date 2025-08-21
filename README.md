@@ -1,2 +1,1 @@
-# C_C-_Project
-D24_ATTT_PTIT
+Dinh Van Duc B24DCAT059
