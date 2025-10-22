@@ -1,2 +1,6 @@
-BS0001|Dinh Van Duc|Nam|2|Than Tiet Nieu|0384916440|Thu 2 den Thu 7
-BS0002|Tran Duy Tan|Nam|2|Tim mach|0821928281|Thu 2 va thu 4
+BS0001|Dinh Van Duc|Nam|3|Than Tiet Nieu|0384916440|Thu 2 den Thu 7
+BS0002|Tran Duy Tan|Nam|5|Tim mach|0821928281|Thu 2 va Thu 4
+BS0003|Hoang Hai Dang|Nu|10|Khoa Nhi|0912345678|Thu 2 den Thu 6
+BS0004|Trinh Tuan Kiet|Nam|15|Ngoai khoa|0987654321|Ca truc 24/7
+BS0005|Le Thanh Long|Nu|8|Da lieu|0905112233|Thu 3 va Thu 5
+BS0006|Nguyen Vu Gia Phuc|Nam|12|Tai Mui Hong|0369871234|Thu 2 den Thu 7

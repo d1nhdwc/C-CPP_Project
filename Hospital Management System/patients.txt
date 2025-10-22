@@ -1,1 +1,10 @@
-BN0004|Dinh Duc|Nam|19|Ha Noi|29/2|N/A|Dau dau|BS0001
+BN0001|Nguyen Van A|Nam|45|Ha Noi|01/10/2025|15/10/2025|Viem phoi|BS0002|Amoxicillin,20;Paracetamol,10
+BN0002|Tran Thi B|Nu|28|Da Nang|05/10/2025|N/A|Sot xuat huyet|BS0002|Oresol,15;Vitamin C,30
+BN0003|Le Van Cuong|Nam|62|Hai Phong|10/10/2025|N/A|Cao huyet ap|BS0001|Aspirin,30
+BN0004|Pham Thi Dung|Nu|19|Can Tho|12/10/2025|18/10/2025|Dau da day|BS0003|Berberin,25
+BN0005|Hoang Van Nam|Nam|33|TP. HCM|14/10/2025|N/A|Gay tay|BS0004|Paracetamol,15
+BN0006|Vu Thi Hoa|Nu|51|Ha Noi|15/10/2025|20/10/2025|Tieu duong|BS0001|NONE
+BN0007|Dinh Van Kien|Nam|8|Nghe An|18/10/2025|N/A|Viem hong hat|BS0003|Amoxicillin,10;Thuoc ho Bo Phe,2
+BN0008|Nguyen Thi Lan|Nu|37|TP. HCM|19/10/2025|N/A|Cam cum|BS0001|Paracetamol,10;Vitamin C,20
+BN0009|Bui Van Minh|Nam|70|Da Nang|20/10/2025|N/A|Thoai hoa khop|BS0004|Aspirin,15
+BN0010|Dang Thi Thu|Nu|22|Ha Noi|21/10/2025|N/A|Tieu chay cap|BS0003|Berberin,20;Oresol,10

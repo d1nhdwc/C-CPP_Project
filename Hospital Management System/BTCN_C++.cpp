@@ -6,8 +6,8 @@
 #include <sstream>
 #include <fstream>
 #include <map>
-#include <windows.h>
 #include <limits>
+#include <windows.h>
 using namespace std;
 
 string red = "\033[31m";
@@ -54,6 +54,7 @@ void end_Patient() {
     cout << " 3) Tim kiem benh nhan bang ID\n";
     cout << " 4) Xoa benh nhan bang ID\n";
     cout << " 5) Cap nhat thong tin benh nhan\n";
+    cout << " 6) Ke don thuoc & Tinh tien\n";
     cout << red << " 0) Back to menu\n" << reset;
     cout << "|---------------------------|\n";
 }
@@ -95,6 +96,22 @@ void end_TK() {
     cout << " 6) Liet ke bac si theo chuyen khoa\n";
     cout << red << " 0) Back to menu\n" << reset;
     cout << "|------------------------------------|\n";
+}
+
+int getSafeIntInput(const string& prompt) {
+    int value;
+    while (true) {
+        cout << prompt;
+        if (cin >> value) {
+            cin.ignore((numeric_limits<streamsize>::max)(), '\n');
+            return value;
+        }
+        else {
+            cout << red << "=> Nhap lieu khong hop le. Vui long nhap lai mot so.\n" << reset;
+            cin.clear();
+            cin.ignore((numeric_limits<streamsize>::max)(), '\n');
+        }
+    }
 }
 
 class Doctor {
@@ -139,7 +156,6 @@ public:
         vector<string> parts;
         while (getline(ss, token, '|')) parts.push_back(token);
         if (parts.size() == 7) {
-            // parts[0] is like "BS0001" -> lấy phần số
             string idStr = parts[0];
             if (idStr.size() > 2 && idStr.substr(0, 2) == "BS") {
                 try {
@@ -172,6 +188,7 @@ private:
     string name, gender; int age;
     string address, inDay, outDay, disaster;
     string doctorID;
+    map<string, int> prescription;
 public:
     Patient() {
         ID = nextIDp++;
@@ -186,6 +203,7 @@ public:
     void setInDay(const string& d) { inDay = d; }
     void setOutDay(const string& d) { outDay = d; }
     void setDisaster(const string& d) { disaster = d; }
+    void setDoctorID(const string& nam) { doctorID = nam; }
     string getName() const { return name; }
     string getGender() const { return gender; }
     int getAge() const { return age; }
@@ -202,7 +220,7 @@ public:
     }
     string toString() const {
         stringstream ss;
-        ss << getID() << "|" << name << "|" << gender << "|" << age << "|" << address << "|" << inDay << "|" << outDay << "|" << disaster << "|" << doctorID;
+        ss << getID() << "|" << name << "|" << gender << "|" << age << "|" << address << "|" << inDay << "|" << outDay << "|" << disaster << "|" << doctorID << "|" << getPrescriptionString();
         return ss.str();
     }
     static Patient fromString(const string& line) {
@@ -232,10 +250,45 @@ public:
             p.outDay = parts[6];
             p.disaster = parts[7];
             p.doctorID = parts[8];
+            if (parts.size() >= 10) {
+                p.parsePrescriptionString(parts[9]);
+            }
             if (nextIDp <= p.ID) nextIDp = p.ID + 1;
         }
         return p;
     }
+
+    string getPrescriptionString() const {
+        if (prescription.empty()) return "NONE";
+        stringstream ss;
+        for (map<string, int>::const_iterator it = prescription.begin(); it != prescription.end(); ++it) {
+            ss << it->first << "," << it->second << ";";
+        }
+        string s = ss.str();
+        s.pop_back();
+        return s;
+    }
+
+    void parsePrescriptionString(const string& presStr) {
+        prescription.clear();
+        if (presStr.empty() || presStr == "NONE") return;
+
+        stringstream ss(presStr);
+        string medicinePair;
+        while (getline(ss, medicinePair, ';')) {
+            stringstream ssPair(medicinePair);
+            string name;
+            string qtyStr;
+            if (getline(ssPair, name, ',') && getline(ssPair, qtyStr)) {
+                try {
+                    prescription[name] = stoi(qtyStr);
+                }
+                catch (...) {
+                }
+            }
+        }
+    }
+    void prescribeMedicine(const map<string, double>& medicineDB);
 };
 
 int Patient::nextIDp = 1;
@@ -247,8 +300,7 @@ void Patient::Add(const vector<Doctor>& doctors) {
     cout << cyan << "-- Moi ban nhap benh nhan: --\n" << reset;
     cout << "[+] Nhap ten benh nhan: "; getline(cin, name);
     cout << "[+] Nhap gioi tinh: "; cin >> gender;
-    cout << "[+] Nhap tuoi: "; cin >> age;
-    cin.ignore();
+    age = getSafeIntInput("[+] Nhap tuoi: ");
     cout << "[+] Nhap dia chi thuong tru: "; getline(cin, address);
     cout << "[+] Nhap ngay vao vien: "; cin >> inDay;
     cout << "[+] Nhap ngay ra vien (Neu chua ra vien nhap 'N/A'): "; cin >> outDay;
@@ -305,7 +357,81 @@ void Patient::Show(const vector<Doctor>& doctors) const {
     else {
         cout << "- Bac si phu trach: [Chua phan cong]\n";
     }
+    cout << "- Don thuoc da ke:\n";
+    if (prescription.empty()) {
+        cout << " [Chua co don thuoc]\n";
+    }
+    else {
+        // Dùng C++11 loop
+        for (map<string, int>::const_iterator it = prescription.begin(); it != prescription.end(); ++it) {
+            cout << "  + " << it->first << " (So luong: " << it->second << ")\n";
+        }
+    }
     cout << endl;
+}
+
+void Patient::prescribeMedicine(const map<string, double>& medicineDB) {
+    system("cls");
+    init_Patient();
+    cout << cyan << "\n--- Ke don thuoc cho benh nhan: " << bold << name << reset << cyan << " ---\n" << reset;
+    cout << "Benh ly chan doan: " << bold << disaster << reset << "\n\n";
+    cout << yellow << "Don thuoc hien tai:\n" << reset;
+    if (prescription.empty()) {
+        cout << "  [Chua co don thuoc]\n";
+    }
+    else {
+        for (map<string, int>::const_iterator it = prescription.begin(); it != prescription.end(); ++it) {
+            cout << "  + " << it->first << " (So luong: " << it->second << ")\n";
+        }
+    }
+    cout << "\nDanh sach thuoc co san (Ten: Gia <Nghin VND>):\n";
+    for (map<string, double>::const_iterator it = medicineDB.begin(); it != medicineDB.end(); ++it) {
+        cout << "  - " << it->first << ": " << it->second << "\n";
+    }
+    string medName;
+    int qty;
+    char choice;
+    cin.ignore((numeric_limits<streamsize>::max)(), '\n');
+    do {
+        cout << "\nNhap ten thuoc can ke (go 'exit' de thoat): ";
+        getline(cin, medName);
+        if (medName == "exit") break;
+        map<string, double>::const_iterator it = medicineDB.find(medName);
+        if (it == medicineDB.end()) {
+            cout << red << "=> Khong tim thay thuoc '" << medName << "' trong kho!\n" << reset;
+            continue;
+        }
+        cout << "[+] Nhap so luong: ";
+        while (!(cin >> qty) || qty < 0) {
+            cout << red << "So luong khong hop le. Nhap lai: " << reset;
+            cin.clear();
+            cin.ignore((numeric_limits<streamsize>::max)(), '\n');
+        }
+        prescription[medName] += qty;
+        cout << green << "=> Da them " << qty << " " << medName << " vao don.\n" << reset;
+        cout << "Tiep tuc ke don (y/n)? ";
+        cin >> choice;
+        cin.ignore((numeric_limits<streamsize>::max)(), '\n');
+    } while (choice == 'y' || choice == 'Y');
+    cout << "\n" << bold << green << "--- HOA DON CAP NHAT CUA BENH NHAN " << name << " ---\n" << reset;
+    double total = 0;
+    cout << "  " << left << setfill(' ') << setw(20) << "Ten thuoc" << setfill(' ') << setw(10) << "So luong" << setfill(' ') <<  setw(15) << "Don gia" << "Thanh tien\n";
+    cout << "  ------------------------------------------------------------\n";
+
+    for (map<string, int>::const_iterator p_it = prescription.begin(); p_it != prescription.end(); ++p_it) {
+        string name = p_it->first;
+        int so_luong = p_it->second;
+        double price = medicineDB.find(name)->second;
+        double lineTotal = price * so_luong;
+        total += lineTotal;
+        cout << "  " << left << setw(20) << name
+            << setw(10) << so_luong
+            << setw(15) << price
+            << lineTotal << "\n";
+    }
+    cout << "  ------------------------------------------------------------\n";
+    cout << bold << "  TONG CONG: " << " " << total << " k VND\n" << reset;
+    cout << cyan << "------------------------------------------------------\n" << reset;
 }
 
 void searchP( vector <Patient> &p, vector <Doctor> &d) {
@@ -388,10 +514,9 @@ void updateP(vector <Patient> &p, vector <Doctor> &d) {
                 cout << " 5) Ngay vao vien\n";
                 cout << " 6) Ngay ra vien\n";
                 cout << " 7) Benh ly\n";
+                cout << " 8) Bac si phu trach\n";
                 cout << red << " 0) Thoat cap nhat\n" << reset;
-                cout << magenta << "> Your Choice: " << reset;
-                cin >> choice;
-                cin.ignore();
+                choice = getSafeIntInput(magenta + "> Your Choice: " + reset);
                 switch (choice) {
                     case 1: { string n; cout << "Nhap ten moi: "; getline(cin, n); x.setName(n); break; }
                     case 2: { string g; cout << "Nhap gioi tinh moi: "; cin >> g; x.setGender(g); break; }
@@ -400,6 +525,21 @@ void updateP(vector <Patient> &p, vector <Doctor> &d) {
                     case 5: { string d; cout << "Nhap ngay vao vien moi: "; cin >> d; x.setInDay(d); break; }
                     case 6: { string d; cout << "Nhap ngay ra vien moi: "; cin >> d; x.setOutDay(d); break; }
                     case 7: { string d; cout << "Nhap benh ly moi: "; getline(cin, d); x.setDisaster(d); break; }
+                    case 8: {
+                        map<string, vector<Doctor>> groups;
+                        for (auto& x : d) {
+                            groups[x.getSpeci()].push_back(x);
+                        }
+                        for (auto& g : groups) {
+                            cout << yellow << "\n=== Chuyen khoa: " << g.first << " ===\n" << reset;
+                            for (auto& x : g.second) {
+                                x.Show();
+                            }
+                        }
+                        string nAme; cout << "Nhap ID bac si phu trach moi: ";
+                        getline(cin, nAme); x.setDoctorID(nAme);
+                        break;
+                    }
                 }
                 cout << endl;
             } while (choice != 0);
@@ -442,8 +582,7 @@ void Doctor::Add() {
     cout << yellow << "-- Moi ban nhap bac si: --\n" << reset;
     cout << "[+] Nhap ten bac si: "; getline(cin, name);
     cout << "[+] Nhap gioi tinh: "; cin >> gender;
-    cout << "[+] Nhap so nam kinh nghiem: "; cin >> age;
-    cin.ignore();
+    age = getSafeIntInput("[+] Nhap so nam kinh nghiem: ");
     cout << "[+] Nhap Khoa: "; getline(cin, speci);
     cout << "[+] Nhap so dien thoai: "; getline(cin, number);
     cout << "[+] Nhap ngay lam viec: "; getline(cin, work);
@@ -541,9 +680,7 @@ void updateD(vector <Doctor> &d) {
                 cout << " 5) So dien thoai\n";
                 cout << " 6) Thoi gian lam viec\n";
                 cout << red << " 0) Thoat cap nhat\n" << reset;
-                cout << magenta << "> Your Choice: " << reset;
-                cin >> choice;
-                cin.ignore();
+                choice = getSafeIntInput(magenta + "> Your Choice: " + reset);
                 switch (choice) {
                 case 1: { string n; cout << "Nhap ten moi: "; getline(cin, n); x.setName(n); break; }
                 case 2: { string g; cout << "Nhap gioi tinh moi: "; cin >> g; x.setGender(g); break; }
@@ -693,7 +830,7 @@ void lietKeTheoKhoa(const vector<Doctor>& d) {
     end_TK();
 }
 
-void menu_Patient(vector <Patient> &p, vector <Doctor>& d) {
+void menu_Patient(vector <Patient> &p, vector <Doctor>& d, const map<string, double>& medicineDB) {
     system("cls");
     int f;
     init_Patient();
@@ -728,6 +865,26 @@ void menu_Patient(vector <Patient> &p, vector <Doctor>& d) {
         }
         else if (f == 5) {
             updateP(p, d);
+        }
+        else if (f == 6) {
+            system("cls");
+            init_Patient();
+            cout << cyan << "-- Ke don thuoc & Tinh tien --\n" << reset;
+            string upID;
+            cout << green << "[+] Nhap ID benh nhan can ke don: " << reset;
+            cin >> upID;
+            bool found = false;
+            for (size_t i = 0; i < p.size(); ++i) {
+                if (p[i].getID() == upID) {
+                    found = true;
+                    p[i].prescribeMedicine(medicineDB);
+                    break;
+                }
+            }
+            if (!found) {
+                cout << red << "=> Khong tim thay benh nhan voi ID nay!\n" << reset;
+            }
+            end_Patient();
         }
     } while (f != 0);
     Menu();
@@ -779,8 +936,7 @@ void menu_TK(vector <Patient>& p, vector <Doctor>& d) {
     init_TK();
     end_TK();
     do {
-        cout << magenta << "> Your Choice: " << reset;
-        cin >> f;
+        f = getSafeIntInput(magenta + "> Your Choice: " + reset);
         if (f == 1) {
             thongKeP(p);
         }
@@ -806,16 +962,26 @@ void menu_TK(vector <Patient>& p, vector <Doctor>& d) {
 int main() {
     vector <Patient> p;
     vector <Doctor> d;
+    map<string, double> medicineDB;
+    medicineDB["Paracetamol"] = 10;
+    medicineDB["Aspirin"] = 20;
+    medicineDB["Amoxicillin"] = 50;
+    medicineDB["Vitamin C"] = 50;
+    medicineDB["Oresol"] = 15000;
+    medicineDB["Thuoc ho Bo Phe"] = 35;
+    medicineDB["Berberin"] = 30;
+    medicineDB["Insulin"] = 40;
+    medicineDB["Thuoc di ung"] = 25;
+    medicineDB["Thuoc nho mui"] = 15;
     loadP(p);
     loadD(d);
     int function;
     Menu();
     do {
-        cout << magenta << "> Your Choice: " << reset;
-        cin >> function;
+        function = getSafeIntInput(magenta + "> Your Choice: " + reset);
         switch (function) {
             case(1):
-                menu_Patient(p, d);
+                menu_Patient(p, d, medicineDB);
                 break;
             case(2):
                 menu_Doctor(d);
