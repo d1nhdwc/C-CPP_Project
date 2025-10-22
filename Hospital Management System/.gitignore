@@ -1,0 +1,7 @@
+.vs/
+*.vsidx
+*.suo
+*.db
+*.user
+*.obj
+*.exe
